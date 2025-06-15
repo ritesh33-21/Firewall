@@ -1,0 +1,28 @@
+logs/sample_modsec_audit.log
+
+--eabc1234-A--
+[15/Jun/2025:10:45:23 +0530] YWxhZGRpbjpvcGVuc2VzYW1l [client 192.168.1.50] [user -] [transaction] [id "1003"] [msg "SQL injection pattern detected in request parameters"] [data "Matched Data: union select found within ARGS:q: union select * from users"] [severity "CRITICAL"] [hostname "192.168.1.10"] [uri "/search"] [unique_id "eabc1234"]
+--eabc1234-B--
+GET /search?q=union+select+*+from+users HTTP/1.1
+Host: 192.168.1.10
+User-Agent: sqlmap/1.6.1
+Accept: */*
+Connection: close
+
+--eabc1234-F--
+HTTP/1.1 403 Forbidden
+Content-Type: text/html
+Content-Length: 212
+
+--eabc1234-H--
+ModSecurity: Access denied with code 403 (phase 2). Match of "rx (?i:select\\s.+\\sfrom|union\\s+select|drop\\s+table)" against "ARGS:q" required. [file "/etc/modsecurity/custom_rules.conf"] [line "6"] [id "1003"] [msg "SQL injection pattern detected in request parameters"] [severity "CRITICAL"] [hostname "192.168.1.10"] [uri "/search"] [unique_id "eabc1234"]
+
+--eabc1234-Z--
+
+
+What It Shows
+	•	Section A: Metadata like IP, rule ID, matched content
+	•	Section B: Full HTTP request sent
+	•	Section F: HTTP response (403 Forbidden)
+	•	Section H: Rule details (ID, message, rule file)
+	•	Section Z: End of transaction
