@@ -1,0 +1,64 @@
+ubuntu_waf_setup.sh — Automated WAF Setup Script
+
+#!/bin/bash
+# WAF Setup Script: ModSecurity + OWASP CRS + Apache2 on Ubuntu
+
+echo "🛠️ Starting WAF setup..."
+
+# Step 1: Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Step 2: Install Apache, ModSecurity, Git, and Curl
+sudo apt install -y apache2 libapache2-mod-security2 git curl
+
+# Step 3: Enable ModSecurity module in Apache
+sudo a2enmod security2
+
+# Step 4: Configure ModSecurity in blocking mode
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+
+# Step 5: Clone and set up OWASP Core Rule Set
+cd /etc/modsecurity
+sudo git clone https://github.com/coreruleset/coreruleset.git
+cd coreruleset
+sudo cp crs-setup.conf.example crs-setup.conf
+
+# Step 6: Link CRS rules with Apache
+echo "IncludeOptional /etc/modsecurity/coreruleset/crs-setup.conf" | sudo tee -a /etc/apache2/mods-enabled/security2.conf
+echo "IncludeOptional /etc/modsecurity/coreruleset/rules/*.conf" | sudo tee -a /etc/apache2/mods-enabled/security2.conf
+
+# Step 7: Restart Apache to apply changes
+sudo systemctl restart apache2
+sudo systemctl enable apache2
+
+echo " WAF Setup Complete!"
+echo "Apache2 with ModSecurity and OWASP CRS is running."
+
+Make it executable:
+chmod +x setup/ubuntu_waf_setup.sh
+
+
+test_commands.txt — Attack Simulation Commands (from Kali or any attacker machine)
+
+# ----------------------
+# WAF Testing Commands
+# ----------------------
+
+# Simulate SQL Injection using curl
+curl -A "sqlmap" http://<your-server-ip>c (i have protected mine by not sharing please don't mind )
+
+# Simulate XSS attack with curl
+curl -X GET "http://<your-server-ip>/?search=<script>alert(1)</script>"
+
+# Use sqlmap to test SQLi
+sqlmap -u "http://<your-server-ip>/vulnerable.php?id=1" --batch --risk=3 --level=5
+
+# Use Nikto for vulnerability scan
+nikto -h http://<your-server-ip>
+
+# Use XSSer for XSS scan
+xsser --url "http://<your-server-ip>"
+
+# View logs on WAF server
+sudo tail -f /var/log/apache2/modsec_audit.log
