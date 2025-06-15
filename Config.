@@ -1,0 +1,38 @@
+custom_rules.conf — Custom SecRule 
+# ================================
+# 🛡️ Custom ModSecurity Rules
+# ================================
+
+# Rule 1: Block access to admin paths
+SecRule REQUEST_URI "@beginsWith /admin" "id:1001,phase:1,deny,status:403,msg:'Admin path access blocked'"
+
+# Rule 2: Block specific User-Agents (e.g., sqlmap, Nikto)
+SecRule REQUEST_HEADERS:User-Agent "@rx (sqlmap|nikto|wpscan)" "id:1002,phase:1,deny,status:403,msg:'Known attack scanner detected'"
+
+# Rule 3: Block requests with suspicious SQL keywords
+SecRule ARGS "@rx (?i:select\s.+\sfrom|union\s+select|drop\s+table)" \
+    "id:1003,phase:2,deny,status:403,msg:'SQL injection pattern detected in request parameters'"
+
+# Rule 4: Block XSS patterns
+SecRule ARGS "@rx <script>|onerror=|onload=" \
+    "id:1004,phase:2,deny,status:403,msg:'Possible XSS attack detected'"
+
+# Rule 5: Block HTTP methods other than GET and POST
+SecRule REQUEST_METHOD "!@streq GET" "chain,id:1005,phase:1,deny,status:405,msg:'Only GET and POST allowed'"
+    SecRule REQUEST_METHOD "!@streq POST"
+
+# Rule 6: Log access to sensitive file types (not block)
+SecRule REQUEST_URI "@rx \.(env|git|htaccess|log|bak)$" \
+    "id:1006,phase:2,log,auditlog,msg:'Attempt to access sensitive file type'"
+
+
+ How to Enable These Rules
+
+	1.	Save the file at:
+/etc/modsecurity/custom_rules.conf
+
+	2.	Include it in Apache:
+echo "IncludeOptional /etc/modsecurity/custom_rules.conf" | sudo tee -a /etc/apache2/mods-enabled/security2.conf
+
+Restart Apache:
+sudo systemctl restart apache2
