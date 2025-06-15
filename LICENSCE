@@ -1,0 +1,27 @@
+---
+
+###  `setup/ubuntu_waf_setup.sh` (Installer Script)
+
+```bash
+#!/bin/bash
+# Ubuntu WAF Setup Script
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y apache2 libapache2-mod-security2 git curl
+
+sudo a2enmod security2
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+
+cd /etc/modsecurity
+sudo git clone https://github.com/coreruleset/coreruleset.git
+cd coreruleset
+sudo cp crs-setup.conf.example crs-setup.conf
+
+echo "IncludeOptional /etc/modsecurity/coreruleset/crs-setup.conf" | sudo tee -a /etc/apache2/mods-enabled/security2.conf
+echo "IncludeOptional /etc/modsecurity/coreruleset/rules/*.conf" | sudo tee -a /etc/apache2/mods-enabled/security2.conf
+
+sudo systemctl restart apache2
+sudo systemctl enable apache2
+
+echo " ModSecurity WAF Setup Complete!"
